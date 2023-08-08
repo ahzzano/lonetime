@@ -1,0 +1,60 @@
+package bot
+
+import (
+	"fmt"
+	"lonetime/utils"
+
+	"github.com/bwmarrin/discordgo"
+)
+
+const ()
+
+var onReadyHandlers []func(*discordgo.Session, *discordgo.Ready) error
+var onChannelJoinHandlers []func(*discordgo.Session, *discordgo.VoiceStateUpdate) error
+var onChannelLeaveHandlers []func(*discordgo.Session, *discordgo.VoiceStateUpdate) error
+var onMessageReactHandlers []func(*discordgo.Session, *discordgo.MessageReactionAdd) error
+
+func AddReadyHandler(function func(*discordgo.Session, *discordgo.Ready) error) {
+	onReadyHandlers = append(onReadyHandlers, function)
+}
+
+func OnReady(s *discordgo.Session, event *discordgo.Ready) {
+	fmt.Println("Bot is Ready")
+
+	for i := 0; i < len(onReadyHandlers); i++ {
+		err := onReadyHandlers[i](s, event)
+
+		utils.CheckError(err)
+	}
+}
+
+func OnChannelJoin(s *discordgo.Session, event *discordgo.VoiceStateUpdate) {
+	if event.BeforeUpdate.ChannelID == "" && event.ChannelID != "" {
+		return
+	}
+	for i := 0; i < len(onChannelJoinHandlers); i++ {
+		err := onChannelJoinHandlers[i](s, event)
+
+		utils.CheckError(err)
+	}
+}
+
+func OnChannelLeave(s *discordgo.Session, event *discordgo.VoiceStateUpdate) {
+	if event.BeforeUpdate.ChannelID != "" && event.ChannelID == "" {
+		return
+	}
+
+	for i := 0; i < len(onChannelLeaveHandlers); i++ {
+		err := onChannelLeaveHandlers[i](s, event)
+
+		utils.CheckError(err)
+	}
+}
+
+func OnMessageReact(s *discordgo.Session, event *discordgo.MessageReactionAdd) {
+	for i := 0; i < len(onMessageReactHandlers); i++ {
+		err := onMessageReactHandlers[i](s, event)
+
+		utils.CheckError(err)
+	}
+}
